@@ -7,15 +7,13 @@ using RecipeApi.Models;
 using RecipeApi.Services;
 using System.Text;
 using RecipeApi.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext
-builder.Services.AddDbContext<AppDbContext>(
-  options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=recipes.db"));
 
 // TokenService with Interface
 builder.Services.AddScoped<ITokenService, TokenService>();
