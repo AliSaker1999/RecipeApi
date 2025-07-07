@@ -8,7 +8,6 @@ using RecipeApi.Services;
 using System.Text;
 using RecipeApi.Interfaces;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext
@@ -58,7 +57,14 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🔐 Seed admin + roles
+// 1️⃣ RUN MIGRATIONS FIRST!
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate(); // Apply all pending migrations automatically
+}
+
+// 2️⃣ THEN SEED ADMIN/ROLES
 using (var scope = app.Services.CreateScope())
 {
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
@@ -86,9 +92,5 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate(); // This will apply all pending migrations automatically
-}
+
 app.Run();
