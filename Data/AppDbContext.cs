@@ -22,9 +22,6 @@ namespace RecipeApi.Data
                 );
         }
 
-        internal async Task SaveChangesAsync()
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }
