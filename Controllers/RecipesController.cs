@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RecipeApi.Data;
 using RecipeApi.Models;
 using RecipeApi.Dtos;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
+using RecipeApi.Services;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace RecipeApi.Controllers
 {
@@ -14,34 +11,31 @@ namespace RecipeApi.Controllers
     [Route("api/[controller]")]
     public class RecipesController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly RecipeService _recipeService;
         private readonly IConfiguration _config;
 
-        public RecipesController(AppDbContext context, IConfiguration config)
+        public RecipesController(RecipeService recipeService, IConfiguration config)
         {
-            _context = context;
+            _recipeService = recipeService;
             _config = config;
         }
 
-        // GET: api/recipes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Recipe>>> GetAllRecipes()
         {
-            return await _context.Recipes.ToListAsync();
+            var recipes = await _recipeService.GetAllAsync();
+            return Ok(recipes);
         }
 
-        // GET: api/recipes/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Recipe>> GetRecipe(int id)
+        public async Task<ActionResult<Recipe>> GetRecipe(string id)
         {
-            var recipe = await _context.Recipes.FindAsync(id);
+            var recipe = await _recipeService.GetByIdAsync(id);
             if (recipe == null)
                 return NotFound();
-
             return recipe;
         }
 
-        // POST: api/recipes
         [HttpPost]
         public async Task<ActionResult<Recipe>> CreateRecipe(CreateRecipeDto dto)
         {
@@ -54,102 +48,73 @@ namespace RecipeApi.Controllers
                 PreparationTime = dto.PreparationTime,
                 Status = dto.Status
             };
-
-            _context.Recipes.Add(recipe);
-            await _context.SaveChangesAsync();
+            await _recipeService.CreateAsync(recipe);
 
             return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, recipe);
         }
 
-
-        // PUT: api/recipes/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRecipe(int id, Recipe recipe)
+        public async Task<IActionResult> UpdateRecipe(string id, Recipe recipe)
         {
             if (id != recipe.Id)
                 return BadRequest();
 
-            _context.Entry(recipe).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Recipes.Any(e => e.Id == id))
-                    return NotFound();
-                throw;
-            }
-
-            return NoContent();
-        }
-
-        // DELETE: api/recipes/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRecipe(int id)
-        {
-            var recipe = await _context.Recipes.FindAsync(id);
-            if (recipe == null)
+            var updated = await _recipeService.UpdateAsync(id, recipe);
+            if (!updated)
                 return NotFound();
 
-            _context.Recipes.Remove(recipe);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
 
-        // GET: api/recipes/search?query=pizza
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRecipe(string id)
+        {
+            var deleted = await _recipeService.DeleteAsync(id);
+            if (!deleted)
+                return NotFound();
+            return NoContent();
+        }
+
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<Recipe>>> SearchRecipes([FromQuery] string query)
         {
-            return await _context.Recipes
-                .Where(r => r.Name.Contains(query) || r.CuisineType.Contains(query))
-                .ToListAsync();
+            var recipes = await _recipeService.SearchAsync(query);
+            return Ok(recipes);
         }
 
-        // PATCH: api/recipes/{id}/status?status=favorite
         [HttpPatch("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromQuery] string status)
+        public async Task<IActionResult> UpdateStatus(string id, [FromQuery] string status)
         {
-            var recipe = await _context.Recipes.FindAsync(id);
-            if (recipe == null)
+            var updated = await _recipeService.UpdateStatusAsync(id, status);
+            if (!updated)
                 return NotFound();
 
-            recipe.Status = status;
-            await _context.SaveChangesAsync();
-
+            var recipe = await _recipeService.GetByIdAsync(id);
             return Ok(recipe);
         }
+
         [HttpPost("ask-ai")]
         public async Task<IActionResult> AskAi([FromBody] AskAiDto dto)
         {
-            // 1. Get all recipes from the DB
-            var recipes = await _context.Recipes.ToListAsync();
+            var recipes = await _recipeService.GetAllAsync();
 
-            // 2. Prepare prompt for the AI (keep it short if you have lots of recipes)
             var prompt = $"Here are some recipes:\n" +
-                string.Join("\n", recipes.Select(r => 
+                string.Join("\n", recipes.Select(r =>
                     $"- {r.Name}: Ingredients: {string.Join(", ", r.Ingredients)}. " +
                     $"Cuisine: {r.CuisineType}. PrepTime: {r.PreparationTime}min. Instructions: {r.Instructions}"
                 )) +
                 $"\n\nUser question: {dto.Question}\n" +
                 "Based only on the recipes above, answer the user's question. Include the best recipe(s) and explain your choice with nutritional info if possible.";
 
-            // 3. Call OpenAI API
-            var apiKey = _config["Groq:ApiKey"];; // Or from config
+            var apiKey = _config["Groq:ApiKey"];
             using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
             var requestBody = new
             {
-                model = "llama3-8b-8192", // or llama3-70b-8192, etc
-                messages = new[]
-                {
-                    new { role = "user", content = prompt }
-                }
+                model = "llama3-8b-8192",
+                messages = new[] { new { role = "user", content = prompt } }
             };
-
-            
 
             var response = await client.PostAsync(
                 "https://api.groq.com/openai/v1/chat/completions",

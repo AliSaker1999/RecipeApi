@@ -1,48 +1,45 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RecipeApi.Dtos;
 using RecipeApi.Models;
 using RecipeApi.Services;
 using RecipeApi.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace RecipeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly SignInManager<AppUser> _signInManager;
+        private readonly UserService _userService;
         private readonly ITokenService _tokenService;
+        private readonly PasswordHasher<AppUser> _hasher = new();
 
-        public AccountController(
-            UserManager<AppUser> userManager,
-            SignInManager<AppUser> signInManager,
-            ITokenService tokenService)
+        public AccountController(UserService userService, ITokenService tokenService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+            _userService = userService;
             _tokenService = tokenService;
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<UserTokenDto>> Login(LoginDto dto)
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.UserName == dto.Username);
-            if (user == null) return Unauthorized("Invalid username");
+            var user = await _userService.GetByUsernameAsync(dto.Username);
+            if (user == null)
+                return Unauthorized("Invalid username");
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
-            if (!result.Succeeded) return Unauthorized("Invalid password");
-
-            var roles = await _userManager.GetRolesAsync(user);
-            var role = roles.FirstOrDefault() ?? "User";
+            var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+            if (result == PasswordVerificationResult.Failed)
+                return Unauthorized("Invalid password");
 
             return new UserTokenDto
             {
                 Username = user.UserName,
-                Role = role,
-                Token = _tokenService.CreateToken(user, role)
+                Role = user.Role,
+                Token = _tokenService.CreateToken(user)
             };
         }
 
@@ -50,42 +47,39 @@ namespace RecipeApi.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> Register(RegisterDto dto)
         {
-            var userExists = await _userManager.FindByNameAsync(dto.Username);
+            var userExists = await _userService.GetByUsernameAsync(dto.Username);
             if (userExists != null)
                 return BadRequest("Username already exists.");
 
             var user = new AppUser
             {
                 UserName = dto.Username,
-                Email = dto.Email
+                Email = dto.Email,
+                Role = "User"
             };
+            user.PasswordHash = _hasher.HashPassword(user, dto.Password);
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
-
-            await _userManager.AddToRoleAsync(user, "User");
+            await _userService.CreateAsync(user);
             return Ok("User registered successfully.");
         }
+
         [HttpDelete("{username}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteUser(string username)
         {
-            var user = await _userManager.FindByNameAsync(username);
+            var user = await _userService.GetByUsernameAsync(username);
             if (user == null) return NotFound("User not found.");
 
-            var result = await _userManager.DeleteAsync(user);
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
+            await _userService.DeleteAsync(user.Id);
             return Ok("User deleted successfully.");
         }
+
         [HttpGet("all")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<string>>> GetAllUsers()
         {
-            var users = await _userManager.Users.Select(u => u.UserName).ToListAsync();
+            var users = await _userService.GetAllUsernamesAsync();
             return Ok(users);
         }
-
     }
 }

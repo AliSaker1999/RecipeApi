@@ -1,29 +1,53 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+// using Microsoft.EntityFrameworkCore; // Not needed unless you use Identity with EF for users
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // Needed for Swagger JWT
-using RecipeApi.Data;
+using Microsoft.OpenApi.Models;
 using RecipeApi.Models;
 using RecipeApi.Services;
 using RecipeApi.Interfaces;
 using System.Text;
 
+// MongoDB
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+using RecipeApi;
+using RecipeApi.Data; // Make sure your namespace matches
+
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext (SQLite)
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=recipes.db"));
+// ----------------- REMOVE or COMMENT OUT SQLITE/EF -----------------
+// builder.Services.AddDbContext<AppDbContext>(options =>
+//     options.UseSqlite("Data Source=recipes.db")); // ❌ Not needed for MongoDB
+// builder.Services.AddEntityFrameworkStores<AppDbContext>();
+// builder.Services.AddScoped<ITokenService, TokenService>();
 
-// TokenService with Interface
-builder.Services.AddScoped<ITokenService, TokenService>();
+// ----------------- MONGODB CONFIGURATION -----------------
+builder.Services.Configure<MongoDbSettings>(
+    builder.Configuration.GetSection("MongoDbSettings"));
 
-// Add Identity
-builder.Services.AddIdentity<AppUser, IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
+    return new MongoClient(settings.ConnectionString);
+});
 
-// JWT Config
+// Register your RecipeService (and any other Mongo-backed services)
+builder.Services.AddSingleton<RecipeService>();
+
+builder.Services.AddSingleton<UserService>();
+
+// ----------------- IDENTITY SETUP -----------------
+// If you want to use ASP.NET Identity with MongoDB, you'd need a custom store.
+// For now, let's assume JWT auth is custom or you keep Identity with in-memory store.
+// If you only want JWT and your own user management in MongoDB, you can remove Identity completely.
+
+// builder.Services.AddIdentity<AppUser, IdentityRole>()
+//    .AddDefaultTokenProviders(); // ❌ Remove if not using EF Identity
+
+builder.Services.AddScoped<ITokenService, TokenService>(); // (If you keep your token service)
+
+// ----------------- JWT CONFIG -----------------
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "super_secret_key_12345";
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
@@ -45,14 +69,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// CORS
+// ----------------- CORS -----------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-// 🔒 Swagger + JWT Bearer
+// ----------------- SWAGGER -----------------
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "RecipeApi", Version = "v1" });
@@ -86,14 +110,15 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// 1️⃣ RUN MIGRATIONS FIRST!
+// ----------------- REMOVE MIGRATION AND SEED CODE -----------------
+// No migrations or seeding with MongoDB unless you want to insert data programmatically
+/*
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate(); // Apply all pending migrations automatically
+    db.Database.Migrate(); // ❌ Remove
 }
 
-// 2️⃣ THEN SEED ADMIN/ROLES
 using (var scope = app.Services.CreateScope())
 {
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
@@ -113,8 +138,30 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(newAdmin, "Admin");
     }
 }
+*/
 
-// Middleware
+using (var scope = app.Services.CreateScope())
+{
+    var userService = scope.ServiceProvider.GetRequiredService<UserService>();
+    var admin = await userService.GetByUsernameAsync("admin");
+    if (admin == null)
+    {
+        var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<AppUser>();
+        var newAdmin = new AppUser
+        {
+            UserName = "admin",
+            Role = "Admin"
+        };
+        newAdmin.PasswordHash = hasher.HashPassword(newAdmin, "Admin123!");
+        await userService.CreateAsync(newAdmin);
+        Console.WriteLine("Seeded admin user (username: admin, password: Admin123!)");
+    }
+}
+
+
+
+
+// ----------------- MIDDLEWARE -----------------
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
