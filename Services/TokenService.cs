@@ -20,8 +20,10 @@ namespace RecipeApi.Services
         {
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),          // <--- User ID for .NET
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),        // <--- User ID (standard "sub")
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Role, user.Role) // Use role from user object
+                new Claim(ClaimTypes.Role, user.Role ?? "User")
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
@@ -37,5 +39,6 @@ namespace RecipeApi.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

@@ -21,6 +21,9 @@ namespace RecipeApi.Services
         public async Task<Recipe?> GetByIdAsync(string id) =>
             await _recipes.Find(r => r.Id == id).FirstOrDefaultAsync();
 
+        public async Task<List<Recipe>> GetByIdsAsync(List<string> ids) =>
+            await _recipes.Find(r => ids.Contains(r.Id)).ToListAsync();
+
         public async Task<List<Recipe>> SearchAsync(string query) =>
             await _recipes.Find(r =>
                 r.Name.ToLower().Contains(query.ToLower()) ||

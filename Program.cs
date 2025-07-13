@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 // using Microsoft.EntityFrameworkCore; // Not needed unless you use Identity with EF for users
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -11,7 +10,6 @@ using System.Text;
 // MongoDB
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using RecipeApi;
 using RecipeApi.Data; // Make sure your namespace matches
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +35,8 @@ builder.Services.AddSingleton<RecipeService>();
 
 builder.Services.AddSingleton<UserService>();
 
+builder.Services.AddSingleton<UserRecipeService>();
+
 // ----------------- IDENTITY SETUP -----------------
 // If you want to use ASP.NET Identity with MongoDB, you'd need a custom store.
 // For now, let's assume JWT auth is custom or you keep Identity with in-memory store.
@@ -60,9 +60,12 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = key
     };
 });
