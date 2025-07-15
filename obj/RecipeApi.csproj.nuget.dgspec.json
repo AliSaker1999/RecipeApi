@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ilove\\Desktop\\Coding\\ali\\New folder\\RecipeApi\\RecipeApi.csproj": {}
+    "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ilove\\Desktop\\Coding\\ali\\New folder\\RecipeApi\\RecipeApi.csproj": {
+    "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ilove\\Desktop\\Coding\\ali\\New folder\\RecipeApi\\RecipeApi.csproj",
+        "projectUniqueName": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj",
         "projectName": "RecipeApi",
-        "projectPath": "C:\\Users\\ilove\\Desktop\\Coding\\ali\\New folder\\RecipeApi\\RecipeApi.csproj",
-        "packagesPath": "C:\\Users\\ilove\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ilove\\Desktop\\Coding\\ali\\New folder\\RecipeApi\\obj\\",
+        "projectPath": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj",
+        "packagesPath": "C:\\Users\\paramountuser\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\ilove\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\paramountuser\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -117,7 +117,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -114,8 +114,8 @@ public class UserRecipeController : ControllerBase
     }
 
     // 4. Get all for user, with optional status filter
-    [HttpGet("my")]
-    public async Task<IActionResult> GetUserRecipes([FromQuery] string? status = null)
+   [HttpGet("my")]
+    public async Task<IActionResult> GetUserRecipes([FromQuery] string? status = null, [FromQuery] string? query = null)
     {
         var userId = GetUserIdFromToken();
 
@@ -138,7 +138,17 @@ public class UserRecipeController : ControllerBase
         // 2. Get full recipe info from DB
         var recipes = await _recipeService.GetByIdsAsync(recipeIds);
 
-        // 3. Project to your DTO
+        // 3. Filter recipes by query if present
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            recipes = recipes.Where(r =>
+                (r.Name?.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (r.CuisineType?.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (r.Ingredients != null && r.Ingredients.Any(ing => ing.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0))
+            ).ToList();
+        }
+
+        // 4. Project to your DTO
         var result = recipes.Select(r => new CreateRecipeDto
         {
             Name = r.Name,
@@ -151,6 +161,9 @@ public class UserRecipeController : ControllerBase
 
         return Ok(result);
     }
+
+
+
 
     [HttpPost("ask-user-ai")]
 public async Task<IActionResult> AskUserAi([FromBody] AskUserAiDto dto)
