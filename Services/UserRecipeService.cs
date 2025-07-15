@@ -29,8 +29,23 @@ namespace RecipeApi.Services
             var filter = Builders<UserRecipe>.Filter.Where(ur =>
                 ur.UserId == userRecipe.UserId && ur.RecipeId == userRecipe.RecipeId
             );
+            
+            // Find if this user-recipe already exists (update case)
+            var existing = await _userRecipes.Find(filter).FirstOrDefaultAsync();
+            if (existing == null)
+            {
+                // Insert case
+                userRecipe.Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+            }
+            else
+            {
+                // Keep the existing Id so you don't lose the document's identity
+                userRecipe.Id = existing.Id;
+            }
+
             await _userRecipes.ReplaceOneAsync(filter, userRecipe, new ReplaceOptions { IsUpsert = true });
         }
+
 
         public async Task<bool> RemoveAsync(string userId, string recipeId)
         {
