@@ -44,7 +44,7 @@ namespace RecipeApi.Controllers
         }
 
         [HttpPost("register")]
-        [Authorize(Roles = "Admin")]
+        [AllowAnonymous]
         public async Task<ActionResult> Register(RegisterDto dto)
         {
             var userExists = await _userService.GetByUsernameAsync(dto.Username);

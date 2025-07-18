@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj": {}
+    "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\MyProjects\\RecipeLand\\RecipeApi\\RecipeApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj": {
+    "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\MyProjects\\RecipeLand\\RecipeApi\\RecipeApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj",
+        "projectUniqueName": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\MyProjects\\RecipeLand\\RecipeApi\\RecipeApi.csproj",
         "projectName": "RecipeApi",
-        "projectPath": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\RecipeApi.csproj",
+        "projectPath": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\MyProjects\\RecipeLand\\RecipeApi\\RecipeApi.csproj",
         "packagesPath": "C:\\Users\\paramountuser\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\New folder (6)\\recipeapi\\obj\\",
+        "outputPath": "C:\\Users\\paramountuser\\OneDrive\\Desktop\\New folder\\MyProjects\\RecipeLand\\RecipeApi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

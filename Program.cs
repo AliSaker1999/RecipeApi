@@ -14,12 +14,6 @@ using RecipeApi.Data; // Make sure your namespace matches
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----------------- REMOVE or COMMENT OUT SQLITE/EF -----------------
-// builder.Services.AddDbContext<AppDbContext>(options =>
-//     options.UseSqlite("Data Source=recipes.db")); // ❌ Not needed for MongoDB
-// builder.Services.AddEntityFrameworkStores<AppDbContext>();
-// builder.Services.AddScoped<ITokenService, TokenService>();
-
 // ----------------- MONGODB CONFIGURATION -----------------
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));
@@ -37,13 +31,6 @@ builder.Services.AddSingleton<UserService>();
 
 builder.Services.AddSingleton<UserRecipeService>();
 
-// ----------------- IDENTITY SETUP -----------------
-// If you want to use ASP.NET Identity with MongoDB, you'd need a custom store.
-// For now, let's assume JWT auth is custom or you keep Identity with in-memory store.
-// If you only want JWT and your own user management in MongoDB, you can remove Identity completely.
-
-// builder.Services.AddIdentity<AppUser, IdentityRole>()
-//    .AddDefaultTokenProviders(); // ❌ Remove if not using EF Identity
 
 builder.Services.AddScoped<ITokenService, TokenService>(); // (If you keep your token service)
 
@@ -113,35 +100,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// ----------------- REMOVE MIGRATION AND SEED CODE -----------------
-// No migrations or seeding with MongoDB unless you want to insert data programmatically
-/*
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate(); // ❌ Remove
-}
 
-using (var scope = app.Services.CreateScope())
-{
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-    if (!await roleManager.RoleExistsAsync("Admin"))
-        await roleManager.CreateAsync(new IdentityRole("Admin"));
-    if (!await roleManager.RoleExistsAsync("User"))
-        await roleManager.CreateAsync(new IdentityRole("User"));
-
-    var admin = await userManager.FindByNameAsync("admin");
-    if (admin == null)
-    {
-        var newAdmin = new AppUser { UserName = "admin", Email = "admin@site.com" };
-        var result = await userManager.CreateAsync(newAdmin, "Admin123!");
-        if (result.Succeeded)
-            await userManager.AddToRoleAsync(newAdmin, "Admin");
-    }
-}
-*/
 
 using (var scope = app.Services.CreateScope())
 {
